@@ -21,18 +21,18 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card bg-warning">
             <div class="stat-icon">
                 <i class="fas fa-clock"></i>
             </div>
             <div class="stat-info">
                 <h3>{{ pending_tasks|length }}</h3>
-                <p>Pending Tasks</p>
+                <p>Active Tasks</p>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="stat-card bg-danger">
             <div class="stat-icon">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -40,6 +40,17 @@
             <div class="stat-info">
                 <h3>{{ overdue_tasks|length }}</h3>
                 <p>Overdue Tasks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-info">
+            <div class="stat-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ pending_approvals|length }}</h3>
+                <p>Pending Approval</p>
             </div>
         </div>
     </div>

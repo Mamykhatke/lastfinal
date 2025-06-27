@@ -226,15 +226,18 @@
                 {% if current_user.has_permission('Proj doc', 'View') or current_user.role in ['Admin', 'Manager'] %}
                 <div class="documents-list">
                     {% for document in documents %}
-                    <div class="document-item">
+                    <div class="document-item" data-document-id="{{ document.id }}">
                         <i class="fas fa-file"></i>
                         <div class="document-info">
                             <div class="document-name">{{ document.original_filename }}</div>
                             <div class="document-meta">
-                                <small>{{ document.uploaded_by.username }} • {{ document.uploaded_at.strftime('%b %d') }}</small>
-                                {% if document.versions %}
-                                <br><small class="text-info">Version {{ document.versions|length }} (Current)</small>
+                                <small>{{ document.uploaded_by.username }} • {{ document.uploaded_at.strftime('%b %d') }}
+                                {% if document.versions|length > 0 %}
+                                • Version {{ document.versions|length + 1 }}
+                                {% else %}
+                                • Version 1
                                 {% endif %}
+                                </small>
                             </div>
                         </div>
                         <div class="document-actions">
@@ -593,6 +596,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Milestone functionality
+function markMilestoneComplete(milestoneId) {
+    if (confirm('Mark this milestone as complete?')) {
+        fetch(`/milestones/${milestoneId}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error marking milestone as complete. Please try again.');
+            }
+        }).catch(error => {
+            alert('Network error. Please try again.');
+        });
+    }
+}
+
+function createMilestone() {
+    window.location.href = `{{ url_for('create_milestone', project_id=project.id) }}`;
+}
 </script>
 
 {% endblock %}

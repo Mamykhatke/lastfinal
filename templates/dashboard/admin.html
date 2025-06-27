@@ -29,18 +29,18 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card warning clickable-stat" onclick="showDetailModal('pending_tasks')">
+        <div class="col-md-2">
+            <div class="stat-card warning clickable-stat" onclick="showDetailModal('active_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-clock"></i>
                 </div>
                 <div class="stat-content">
                     <h3>{{ pending_tasks }}</h3>
-                    <p>Pending Tasks</p>
+                    <p>Active Tasks</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card danger clickable-stat" onclick="showDetailModal('overdue_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -48,6 +48,17 @@
                 <div class="stat-content">
                     <h3>{{ overdue_tasks }}</h3>
                     <p>Overdue Tasks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card info clickable-stat" onclick="showDetailModal('pending_approvals')">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ pending_approvals }}</h3>
+                    <p>Pending Approvals</p>
                 </div>
             </div>
         </div>
@@ -383,8 +394,10 @@ function showDetailModal(type) {
     // Set title based on type
     const titles = {
         'completed_tasks': 'Completed Tasks',
-        'pending_tasks': 'Pending Tasks', 
-        'overdue_tasks': 'Overdue Tasks'
+        'active_tasks': 'Active Tasks',
+        'pending_tasks': 'Active Tasks', 
+        'overdue_tasks': 'Overdue Tasks',
+        'pending_approvals': 'Pending Approvals'
     };
     
     modalTitle.textContent = titles[type] || 'Tasks';

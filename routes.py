@@ -104,6 +104,11 @@ def admin_dashboard():
     pending_tasks = Task.query.filter_by(status='Pending').count()
     overdue_tasks = Task.query.filter(Task.deadline < datetime.now().date(), Task.status != 'Completed').count()
     
+    # Get pending approvals count
+    pending_task_approvals = TaskApproval.query.filter_by(status='Pending').count()
+    pending_project_approvals = ProjectApproval.query.filter_by(status='Pending').count()
+    pending_approvals = pending_task_approvals + pending_project_approvals
+    
     # Recent projects
     recent_projects = Project.query.order_by(Project.created_at.desc()).limit(3).all()
     
@@ -121,6 +126,7 @@ def admin_dashboard():
                          completed_tasks=completed_tasks,
                          pending_tasks=pending_tasks,
                          overdue_tasks=overdue_tasks,
+                         pending_approvals=pending_approvals,
                          recent_projects=recent_projects,
                          upcoming_deadlines=upcoming_deadlines)
 
@@ -144,6 +150,27 @@ def manager_dashboard():
     pending_tasks = len([t for t in tasks if t.status == 'Pending'])
     overdue_tasks = len([t for t in tasks if t.is_overdue()])
     
+    # Get pending approvals count for manager's team
+    if current_user.role == 'Manager':
+        # Get approvals for tasks/projects where manager has oversight
+        team_user_ids = [u.id for u in current_user.managed_users]
+        team_user_ids.append(current_user.id)  # Include manager's own items
+        
+        pending_task_approvals = TaskApproval.query.join(Task).filter(
+            TaskApproval.status == 'Pending',
+            Task.assigned_to_id.in_(team_user_ids)
+        ).count()
+        
+        pending_project_approvals = ProjectApproval.query.join(Project).filter(
+            ProjectApproval.status == 'Pending',
+            Project.created_by_id.in_(team_user_ids)
+        ).count()
+    else:  # Admin
+        pending_task_approvals = TaskApproval.query.filter_by(status='Pending').count()
+        pending_project_approvals = ProjectApproval.query.filter_by(status='Pending').count()
+    
+    pending_approvals = pending_task_approvals + pending_project_approvals
+    
     # Recent projects and upcoming deadlines
     recent_projects = sorted(projects, key=lambda x: x.created_at, reverse=True)[:3]
     upcoming_deadlines = sorted([t for t in tasks if t.deadline and t.status != 'Completed'], 
@@ -157,6 +184,7 @@ def manager_dashboard():
                          completed_tasks=completed_tasks,
                          pending_tasks=pending_tasks,
                          overdue_tasks=overdue_tasks,
+                         pending_approvals=pending_approvals,
                          recent_projects=recent_projects,
                          upcoming_deadlines=upcoming_deadlines)
 
@@ -681,13 +709,27 @@ def team_member_detail(user_id):
     pending_tasks = [t for t in user_tasks if t.status in ['Pending', 'In Progress']]
     overdue_tasks = [t for t in user_tasks if t.is_overdue()]
     
+    # Get pending approvals for this user
+    pending_task_approvals = TaskApproval.query.join(Task).filter(
+        TaskApproval.status == 'Pending',
+        Task.assigned_to_id == user_id
+    ).all()
+    
+    pending_project_approvals = ProjectApproval.query.join(Project).filter(
+        ProjectApproval.status == 'Pending',
+        Project.created_by_id == user_id
+    ).all()
+    
+    pending_approvals = pending_task_approvals + pending_project_approvals
+    
     return render_template('team/member_detail.html', 
                          user=user,
                          user_tasks=user_tasks,
                          user_projects=user_projects,
                          completed_tasks=completed_tasks,
                          pending_tasks=pending_tasks,
-                         overdue_tasks=overdue_tasks)
+                         overdue_tasks=overdue_tasks,
+                         pending_approvals=pending_approvals)
 
 @app.route('/tasks/<int:task_id>/reassign', methods=['POST'])
 @login_required
@@ -1222,3 +1264,193 @@ def api_team_members():
     
     team_data = [{'id': user.id, 'username': user.username, 'role': user.role} for user in users]
     return {'team_members': team_data}
+
+# API endpoints for dashboard modals
+@app.route('/api/dashboard/<task_type>')
+@login_required
+def api_dashboard_data(task_type):
+    """API endpoint for dashboard task modals"""
+    from flask import jsonify
+    
+    try:
+        if task_type == 'completed_tasks':
+            tasks = Task.query.filter_by(status='Completed')
+        elif task_type == 'active_tasks' or task_type == 'pending_tasks':
+            tasks = Task.query.filter_by(status='Pending')
+        elif task_type == 'overdue_tasks':
+            tasks = Task.query.filter(Task.deadline < datetime.now().date(), Task.status != 'Completed')
+        elif task_type == 'pending_approvals':
+            # Get pending approvals based on user role
+            if current_user.role == 'Admin':
+                # Admin sees all pending approvals
+                task_approvals = TaskApproval.query.filter_by(status='Pending').all()
+                project_approvals = ProjectApproval.query.filter_by(status='Pending').all()
+            elif current_user.role == 'Manager':
+                # Manager sees approvals for their team
+                team_user_ids = [u.id for u in current_user.managed_users]
+                team_user_ids.append(current_user.id)
+                
+                task_approvals = TaskApproval.query.join(Task).filter(
+                    TaskApproval.status == 'Pending',
+                    Task.assigned_to_id.in_(team_user_ids)
+                ).all()
+                
+                project_approvals = ProjectApproval.query.join(Project).filter(
+                    ProjectApproval.status == 'Pending',
+                    Project.created_by_id.in_(team_user_ids)
+                ).all()
+            else:
+                task_approvals = []
+                project_approvals = []
+            
+            # Combine approvals into task format
+            approval_items = []
+            for approval in task_approvals:
+                approval_items.append({
+                    'id': approval.task_id,
+                    'title': approval.task.title,
+                    'project_title': approval.task.project.title,
+                    'priority': approval.task.priority,
+                    'status': 'Pending Approval',
+                    'assigned_user': approval.marked_complete_by.username if approval.marked_complete_by else None,
+                    'deadline': approval.task.deadline.strftime('%b %d, %Y') if approval.task.deadline else None,
+                    'type': 'task'
+                })
+            
+            for approval in project_approvals:
+                approval_items.append({
+                    'id': approval.project_id,
+                    'title': approval.project.title,
+                    'project_title': approval.project.title,
+                    'priority': 'Medium',
+                    'status': 'Pending Approval',
+                    'assigned_user': approval.marked_complete_by.username if approval.marked_complete_by else None,
+                    'deadline': approval.project.deadline.strftime('%b %d, %Y') if approval.project.deadline else None,
+                    'type': 'project'
+                })
+            
+            return jsonify({'tasks': approval_items})
+        else:
+            return jsonify({'tasks': []})
+        
+        # For regular task queries, filter based on user permissions
+        if current_user.role == 'Admin':
+            tasks = tasks.all()
+        else:
+            accessible_tasks = current_user.get_accessible_tasks()
+            task_ids = [t.id for t in accessible_tasks]
+            tasks = tasks.filter(Task.id.in_(task_ids)).all()
+        
+        # Format task data for JSON response
+        task_data = []
+        for task in tasks:
+            task_data.append({
+                'id': task.id,
+                'title': task.title,
+                'project_title': task.project.title,
+                'priority': task.priority,
+                'status': task.status,
+                'assigned_user': task.assigned_user.username if task.assigned_user else None,
+                'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None,
+                'type': 'task'
+            })
+        
+        return jsonify({'tasks': task_data})
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'tasks': []})
+
+# API endpoints for approval functionality
+@app.route('/api/approve/<item_type>/<int:item_id>', methods=['POST'])
+@login_required
+def api_approve_item(item_type, item_id):
+    """API endpoint to approve tasks/projects"""
+    from flask import jsonify
+    
+    try:
+        if current_user.role not in ['Admin', 'Manager']:
+            return jsonify({'success': False, 'message': 'Insufficient permissions'})
+        
+        if item_type == 'task':
+            approval = TaskApproval.query.filter_by(task_id=item_id, status='Pending').first()
+            if approval:
+                approval.status = 'Approved'
+                approval.approved_by_id = current_user.id
+                approval.approved_at = datetime.now()
+                
+                # Update task status to completed
+                task = Task.query.get(item_id)
+                if task:
+                    task.status = 'Completed'
+                    task.completed_at = datetime.now()
+                    task.project.update_progress()
+                
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Task approved successfully'})
+            
+        elif item_type == 'project':
+            approval = ProjectApproval.query.filter_by(project_id=item_id, status='Pending').first()
+            if approval:
+                approval.status = 'Approved'
+                approval.approved_by_id = current_user.id
+                approval.approved_at = datetime.now()
+                
+                # Update project status to completed
+                project = Project.query.get(item_id)
+                if project:
+                    project.status = 'Completed'
+                
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Project approved successfully'})
+        
+        return jsonify({'success': False, 'message': 'Approval not found'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/reject/<item_type>/<int:item_id>', methods=['POST'])
+@login_required
+def api_reject_item(item_type, item_id):
+    """API endpoint to reject tasks/projects (mark as not complete)"""
+    from flask import jsonify
+    
+    try:
+        if current_user.role not in ['Admin', 'Manager']:
+            return jsonify({'success': False, 'message': 'Insufficient permissions'})
+        
+        if item_type == 'task':
+            approval = TaskApproval.query.filter_by(task_id=item_id, status='Pending').first()
+            if approval:
+                approval.status = 'Rejected'
+                approval.approved_by_id = current_user.id
+                approval.approved_at = datetime.now()
+                
+                # Update task status back to active
+                task = Task.query.get(item_id)
+                if task:
+                    task.status = 'Pending'
+                    task.completed_at = None
+                    task.project.update_progress()
+                
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Task marked as not complete'})
+            
+        elif item_type == 'project':
+            approval = ProjectApproval.query.filter_by(project_id=item_id, status='Pending').first()
+            if approval:
+                approval.status = 'Rejected'
+                approval.approved_by_id = current_user.id
+                approval.approved_at = datetime.now()
+                
+                # Update project status back to active
+                project = Project.query.get(item_id)
+                if project:
+                    project.status = 'In Progress'
+                
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Project marked as not complete'})
+        
+        return jsonify({'success': False, 'message': 'Approval not found'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})

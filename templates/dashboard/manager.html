@@ -29,25 +29,36 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card warning">
+        <div class="col-md-2">
+            <div class="stat-card warning clickable-stat" onclick="showDetailModal('active_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-clock"></i>
                 </div>
                 <div class="stat-content">
                     <h3>{{ pending_tasks }}</h3>
-                    <p>Pending Tasks</p>
+                    <p>Active Tasks</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card danger">
+        <div class="col-md-2">
+            <div class="stat-card danger clickable-stat" onclick="showDetailModal('overdue_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="stat-content">
                     <h3>{{ overdue_tasks }}</h3>
                     <p>Overdue Tasks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card info clickable-stat" onclick="showDetailModal('pending_approvals')">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ pending_approvals }}</h3>
+                    <p>Pending Approvals</p>
                 </div>
             </div>
         </div>
@@ -148,4 +159,151 @@
         </div>
     </div>
 </div>
+
+<!-- Task Detail Modal -->
+<div id="taskDetailModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Task Details</h3>
+            <span class="close" onclick="hideTaskModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="hideTaskModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function navigateToTask(taskId) {
+    window.location.href = `/tasks/${taskId}`;
+}
+
+function showDetailModal(type) {
+    const modal = document.getElementById('taskDetailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    // Set title based on type
+    const titles = {
+        'completed_tasks': 'Completed Tasks',
+        'active_tasks': 'Active Tasks',
+        'pending_tasks': 'Active Tasks', 
+        'overdue_tasks': 'Overdue Tasks',
+        'pending_approvals': 'Pending Approvals'
+    };
+    
+    modalTitle.textContent = titles[type] || 'Tasks';
+    modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+    
+    // Show modal
+    modal.style.display = 'block';
+    
+    // Fetch task details
+    fetch(`/api/dashboard/${type}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.tasks && data.tasks.length > 0) {
+                modalBody.innerHTML = data.tasks.map(task => `
+                    <div class="task-list-item" onclick="navigateToTask(${task.id})">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6>${task.title}</h6>
+                                <small class="text-muted">${task.project_title}</small>
+                                <div class="mt-1">
+                                    <span class="badge badge-${task.priority.toLowerCase()}">${task.priority}</span>
+                                    <span class="badge badge-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+                                    ${task.assigned_user ? `<small class="text-muted ml-2"><i class="fas fa-user"></i> ${task.assigned_user}</small>` : ''}
+                                </div>
+                            </div>
+                            <small class="text-muted">${task.deadline || 'No deadline'}</small>
+                        </div>
+                        ${type === 'pending_approvals' ? `
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); approveItem(${task.id}, '${task.type}')">Approve</button>
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); rejectItem(${task.id}, '${task.type}')">Mark Not Complete</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                modalBody.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No ${type.replace('_', ' ')} found</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            modalBody.innerHTML = `
+                <div class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading tasks</p>
+                </div>
+            `;
+        });
+}
+
+function hideTaskModal() {
+    document.getElementById('taskDetailModal').style.display = 'none';
+}
+
+function approveItem(id, type) {
+    fetch(`/api/approve/${type}/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh the modal content
+            showDetailModal('pending_approvals');
+            // Show success message
+            alert('Item approved successfully!');
+        } else {
+            alert('Error approving item: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error approving item');
+    });
+}
+
+function rejectItem(id, type) {
+    fetch(`/api/reject/${type}/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh the modal content
+            showDetailModal('pending_approvals');
+            // Show success message
+            alert('Item marked as not complete successfully!');
+        } else {
+            alert('Error marking item as not complete: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error marking item as not complete');
+    });
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('taskDetailModal');
+    if (event.target == modal) {
+        hideTaskModal();
+    }
+}
+</script>
+
 {% endblock %}

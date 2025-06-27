@@ -1,0 +1,50 @@
+i want additional somemore features in my cureent project , in Dashboard Overview
+1
+Active Projects
+
+0
+Completed Tasks
+
+6
+Pending Tasks
+
+1
+Overdue Tasks where all this is shown in ui rename the pending task section to Active Tasks , and add one more approval section , in which on click of approval we will have list of pending approval task which was marked as complete by user earlier but for manager also same ui add one more approval section for same manager where the list of
+
+with that where the list of appropal pending of milestone outcomes and most important task will be there for waiting of approval ,in pending approval section we have list of pending approval task , outcome and milestone , which will be approved by admin , only and admin can select mark not complete so the task will again go in status of active for user and admin and manager for all , this can be done many times till it not mark as complete that task outcome and milestones , from there for every task outcome module , in which task it is mention that too and for milestone under which project with details , so for every task and outcome two option mark as complete and not complete so the status of task and outcome will again change for everyone in ui of admin manager and user , as it is hieararchy based , under task outcome also do mark as complete for each outcome under same goes for milestone , add for every task outcome mark complete option for  user to whoom task is assigned , and it will show to all add that section for everyone in ui pending approval so if user also mark complete any task assigned so it go in that list , approval section in ui where on click he can also see his own task list to whoom he has assigned mark complete and outcome also and milestone also in that list if admin mark as not complete than status changed and showed to user to whoom task outcome assigned from that section only , and that active task list add three dot to each task in active tasks list from where on click of it reassign task and list of all team member in dropdown comes to there , and can select any team member admin and can reassign task , and in ui of that task show in ui it is reassigned task from this user to this to manager and to user also , and for manager also dont show only updated team member show earlier team member also by arrow you can that reassigned to or write simpply reassigned to -> like that , from anywhere it reassigned just show in ui also you can showq here Project:
+MISSION VISTAAR
+Created by:
+himanshu
+Assigned to:
+ayush
+Created on:
+June 24, 2025
+Deadline:
+June 30, 2025 where all this details are showing here inside task click and at out reassigned task mentioned , show in ui ok of task list and on click of task akso from task section just showeverywhere , and currently in this code add milestone button is not working just make it like outcome how i can add multiple outcome for task just like that add multiple outcome and show in timeline just like outcome and in list form both options available , for project milestone must work , and in ui of click of project see ui team meber is at top i am giving screenshot , instead if that team meber list inside project click , add there milestone section , cureently it is at bottom just vice versa it , milestone should come at above where team member is listed and pick that team member section and kept at botton below task list where currently milestone is there just reverse it , and in document section of task and project , for particular document also comment section just for only document , one comment section and one uppload link section for googledrive link list paste it here so there will be two options uppload doc or uppload link and for that comment section also for doc , and for multiple document uppload just show in ui , like let me show in ui currently showing 
+SAP HANA Database.docx
+rishi • Jun 24
+SAP Analytics Cloud REST API.docx
+rishi • Jun 24 this data but here add version 1 , version 2 respectively in ui , it will goes like that , for each doif third added show in ui versin 3 with name of doc or near uploader name , best option will be nera uploader name , and task delete button from three dot click it is not working , showing error just like that for project also delete button on click of three dot , from task tree dot too for deleting task , in current task dependency list from on click of add dependency list of task is not showing of their project , like of project task list should be seen there , add select and show at realtime at that time in ui of task dependency that this task is dependent on first on this task , and this feature will be for all manager admin and user too , anyone that this task is dependent on earlier firstly on this so that add dependency button should work with dropdown list of each task , and manul dependency me , one can add by typing this is manual dependency and this feature should be there at time of creating a task also , when creating new task current list , but add one opton for manual also in dropdown or if you want than apart from it but add there also , for admin for manager at time of task creatine and afterards laso from task ui task dependency add dependency select from dropdown list of one project and type manual also , and for manager currently deadline section in ui is not looking like of admin i am giving for admin , i had upploaded second screenshot of it , for admin it is showing this but for manager it is simple update for manager also and it is working on click of task from deadline it is redirecting to that particular task from all tasks list , inside that task , work equally for all , and inside task ui three button to reassign task with same list , in ui it is written slrd logo only written remove that from ui of dashboard , in settinfs add field for hierarchy for admin tree like structure in settings on click show tree inside whoom whoom , in task creation time , initial stutatus it showing pending rename it to acive and on hold cureently it showing pending and in progress option rename it to active and on hold respectively , and from dropdown list of task for dependent , creor can select multiple task at time of cretion not only one , add multile selection option from list and same like after cretion of task in ui of task >> task dependency add multiple selection not only one from there , after creation of task add dependency multiple from dropdown list can be selected , for admin >> team , on clcik of card not working showing internal server error , just like mager it is working on click and all functionalities i give screenshot 3 on clcik of team card showing Team Member Details
+
+0
+Completed Tasks
+
+1
+Pending Tasks
+
+1
+Overdue Tasks
+
+Overview
+Projects
+Tasks
+Contact Info for that particular user see screenshot third , it should work for admin also currently working only for manager , it should work same as for admin , functions you can see on clickof team , any member this ui task , list three dots reassign to , list is cming of team member all things are working for manager do it same for admin error is coming currently , and add one more section there now we have Team Member Details
+
+0
+Completed Tasks
+
+1
+Pending Tasks
+
+1
+Overdue  Tasks in team >> any  particular clcik , rename pending tasks to active tasks see screenshot 3 , add one more section near that 3 , pending approval , same features , for that person say manager how much pending approval is kept list of all task which users had marked complete just same like dashboard ui and features add that pending approval in any colour say b;ue near red section add pending approval , all outcomes task milestone will be there which are pending approval , will be here , with same feature to approve or not to approve , han status changed and again alloted to same user to whom task is assigned and marked as complete jisne mark kia tha again do it , after that task staus not selected it goes in active task list for that particular user make it clcikable pending approcal in this ui in blue colour near red , now in settings of manager add user , add task document in permission matrix for admin and manager , task is on hold feature in dependency that shoul work , if dependencies were added than on hold staus should be there , and make sure the permission mattric for admin and user the permission which are given is only user can do other hide all the things which permission is not there for user like not can view edit project and task so he can not not add comment and document so he can not this will be managed by admin and manager from permission mattrix and that should for for that particular user  to whoom they are updating rights , make the things invisible if he can not or if you want to show than at time of view uppload add coment doc give pop up msg you have no permission to add doc and cmnt like this for all user which will be managed by admin and manager 

@@ -76,22 +76,27 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="dependent_on_task_id">Task Dependency (Optional)</label>
-                                <select class="form-control" id="dependent_on_task_id" name="dependent_on_task_id">
-                                    <option value="">No dependency</option>
+                                <label for="dependent_on_task_id">Task Dependencies (Optional)</label>
+                                <select class="form-control" id="dependent_on_task_id" name="dependent_on_task_id" multiple>
                                     <optgroup label="Tasks in selected project" id="project-tasks">
                                         <!-- Will be populated by JavaScript -->
                                     </optgroup>
                                 </select>
-                                <small class="form-text text-muted">Select if this task depends on another task</small>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple task dependencies</small>
+                                
+                                <div class="mt-3">
+                                    <label for="manual_dependencies">Manual Dependencies</label>
+                                    <input type="text" class="form-control" id="manual_dependencies" name="manual_dependencies" placeholder="Type dependency names, separated by commas">
+                                    <small class="form-text text-muted">Enter external or manual dependency names</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="status">Initial Status</label>
                                 <select class="form-control" id="status" name="status">
-                                    <option value="Pending" selected>Pending</option>
-                                    <option value="In Progress">In Progress</option>
+                                    <option value="Active" selected>Active</option>
+                                    <option value="On Hold">On Hold</option>
                                 </select>
                             </div>
                         </div>

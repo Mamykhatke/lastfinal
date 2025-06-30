@@ -724,6 +724,7 @@ def team_member_detail(user_id):
     
     return render_template('team/member_detail.html', 
                          user=user,
+                         User=User,
                          user_tasks=user_tasks,
                          user_projects=user_projects,
                          completed_tasks=completed_tasks,
@@ -1008,14 +1009,47 @@ def settings_add_user():
 def api_dashboard_tasks(task_type):
     """API endpoint for dashboard task modals"""
     from datetime import date
+    from flask import jsonify
     
     if task_type == 'completed_tasks':
         tasks = Task.query.filter_by(status='Completed').order_by(Task.completed_at.desc()).limit(50).all()
-    elif task_type == 'pending_tasks':
-        tasks = Task.query.filter(Task.status.in_(['Pending', 'In Progress'])).order_by(Task.created_at.desc()).limit(50).all()
+    elif task_type == 'active_tasks':
+        tasks = Task.query.filter(Task.status.in_(['Active', 'In Progress'])).order_by(Task.created_at.desc()).limit(50).all()
     elif task_type == 'overdue_tasks':
         today = date.today()
         tasks = Task.query.filter(Task.deadline < today, Task.status != 'Completed').order_by(Task.deadline).limit(50).all()
+    elif task_type == 'pending_approvals':
+        # Get pending approvals for tasks, projects, and outcomes
+        pending_data = []
+        
+        # Task approvals
+        task_approvals = TaskApproval.query.filter_by(status='Pending').all()
+        for approval in task_approvals:
+            pending_data.append({
+                'id': approval.task.id,
+                'type': 'task',
+                'title': approval.task.title,
+                'project_title': approval.task.project.title,
+                'marked_by': approval.marked_complete_by.username,
+                'marked_at': approval.marked_complete_at.strftime('%b %d, %Y at %I:%M %p'),
+                'priority': approval.task.priority,
+                'status': approval.task.status
+            })
+        
+        # Project approvals
+        project_approvals = ProjectApproval.query.filter_by(status='Pending').all()
+        for approval in project_approvals:
+            pending_data.append({
+                'id': approval.project.id,
+                'type': 'project',
+                'title': approval.project.title,
+                'marked_by': approval.marked_complete_by.username,
+                'marked_at': approval.marked_complete_at.strftime('%b %d, %Y at %I:%M %p'),
+                'priority': 'N/A',
+                'status': approval.project.status
+            })
+        
+        return jsonify({'items': pending_data})
     else:
         tasks = []
     
@@ -1031,7 +1065,7 @@ def api_dashboard_tasks(task_type):
             'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None
         })
     
-    return {'tasks': task_data}
+    return jsonify({'tasks': task_data})
 
 @app.route('/documents/<int:document_id>/comments', methods=['POST'])
 @login_required
@@ -1452,5 +1486,18 @@ def api_reject_item(item_type, item_id):
         
         return jsonify({'success': False, 'message': 'Approval not found'})
         
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/milestones/<int:milestone_id>/complete', methods=['POST'])
+@login_required
+def complete_milestone_api(milestone_id):
+    """API endpoint to mark milestone as complete"""
+    from flask import jsonify
+    try:
+        milestone = Milestone.query.get_or_404(milestone_id)
+        milestone.status = "Completed"
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Milestone completed successfully!'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})

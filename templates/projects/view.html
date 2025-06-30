@@ -140,6 +140,9 @@
                 </div>
             </div>
             
+        </div>
+        
+        <div class="col-md-4">
             <!-- Milestones Section -->
             <div class="content-card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -186,9 +189,7 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-4">
+
             <!-- Team Members -->
             <div class="content-card mb-4">
                 <div class="card-header">
@@ -351,6 +352,36 @@
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">Upload Version</button>
                 <button type="button" class="btn btn-secondary" onclick="hideUploadVersionModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Milestone Modal -->
+<div id="addMilestoneModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add New Milestone</h3>
+            <span class="close" onclick="hideAddMilestoneModal()">&times;</span>
+        </div>
+        <form method="POST" action="{{ url_for('create_milestone', project_id=project.id) }}">
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="milestoneTitle">Milestone Title</label>
+                    <input type="text" class="form-control" id="milestoneTitle" name="title" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="milestoneDescription">Description</label>
+                    <textarea class="form-control" id="milestoneDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="milestoneDueDate">Due Date</label>
+                    <input type="date" class="form-control" id="milestoneDueDate" name="due_date">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Add Milestone</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddMilestoneModal()">Cancel</button>
             </div>
         </form>
     </div>
@@ -587,6 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.onclick = function(event) {
         const versionModal = document.getElementById('versionHistoryModal');
         const uploadModal = document.getElementById('uploadVersionModal');
+        const milestoneModal = document.getElementById('addMilestoneModal');
         
         if (event.target == versionModal) {
             hideVersionModal();
@@ -594,10 +626,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target == uploadModal) {
             hideUploadVersionModal();
         }
+        if (event.target == milestoneModal) {
+            hideAddMilestoneModal();
+        }
     }
 });
 
 // Milestone functionality
+function showAddMilestoneModal() {
+    document.getElementById('addMilestoneModal').style.display = 'block';
+}
+
+function hideAddMilestoneModal() {
+    document.getElementById('addMilestoneModal').style.display = 'none';
+}
 function markMilestoneComplete(milestoneId) {
     if (confirm('Mark this milestone as complete?')) {
         fetch(`/milestones/${milestoneId}/complete`, {

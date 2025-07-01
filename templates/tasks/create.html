@@ -137,24 +137,27 @@ document.getElementById('project_id').addEventListener('change', function() {
     projectTasksGroup.innerHTML = '';
     
     if (projectId) {
-        // Fetch project tasks and deadline
-        fetch(`/api/project/${projectId}/tasks`)
-            .then(response => response.json())
-            .then(data => {
-                // Update task dependencies
-                data.tasks.forEach(task => {
-                    const option = document.createElement('option');
-                    option.value = task.id;
-                    option.textContent = task.title;
-                    projectTasksGroup.appendChild(option);
-                });
-                
-                // Set max date for task deadline based on project deadline
-                if (data.project_deadline) {
-                    deadlineInput.max = data.project_deadline;
-                }
-            })
-            .catch(error => console.error('Error fetching project tasks:', error));
+        // Fetch all available tasks for dependencies and project deadline
+        Promise.all([
+            fetch(`/api/tasks/all`),
+            fetch(`/api/project/${projectId}/tasks`)
+        ])
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(([allTasksData, projectData]) => {
+            // Update task dependencies with all available tasks
+            allTasksData.tasks.forEach(task => {
+                const option = document.createElement('option');
+                option.value = task.id;
+                option.textContent = `${task.title} (${task.project_title})`;
+                projectTasksGroup.appendChild(option);
+            });
+            
+            // Set max date for task deadline based on project deadline
+            if (projectData.project_deadline) {
+                deadlineInput.max = projectData.project_deadline;
+            }
+        })
+        .catch(error => console.error('Error fetching tasks:', error));
     } else {
         deadlineInput.removeAttribute('max');
     }

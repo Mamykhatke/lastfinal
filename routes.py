@@ -369,13 +369,37 @@ def create_task():
             task.deadline = datetime.strptime(deadline, '%Y-%m-%d').date()
         
         db.session.add(task)
+        db.session.flush()  # Get task ID without committing
+        
+        # Handle task dependencies
+        dependent_task_ids = request.form.getlist('dependent_on_task_id')
+        for dep_task_id in dependent_task_ids:
+            if dep_task_id:
+                # Create dependency record if needed
+                task.dependent_on_task_id = dep_task_id  # For backward compatibility
+                break  # Use first one for the old field
+        
+        # Handle manual dependencies
+        manual_deps = request.form.get('manual_dependencies', '').strip()
+        if manual_deps:
+            from models_extensions import ManualTaskDependency
+            for dep_name in manual_deps.split(','):
+                dep_name = dep_name.strip()
+                if dep_name:
+                    manual_dep = ManualTaskDependency(
+                        task_id=task.id,
+                        dependency_name=dep_name,
+                        dependency_description=f"Manual dependency: {dep_name}"
+                    )
+                    db.session.add(manual_dep)
+        
         db.session.commit()
         
         # Update project progress
         project = Project.query.get(project_id)
         project.update_progress()
         
-        flash('Task created successfully!', 'success')
+        flash('Task created successfully with dependencies!', 'success')
         return redirect(url_for('tasks_list'))
     
     # Get accessible projects and assignable users
@@ -402,10 +426,18 @@ def view_task(task_id):
     comments = task.comments.order_by(Comment.created_at.desc()).all()
     documents = task.documents.all()
     
+    # Get available tasks for dependency modal
+    accessible_projects = current_user.get_accessible_projects()
+    available_tasks = []
+    for project in accessible_projects:
+        project_tasks = Task.query.filter_by(project_id=project.id).filter(Task.id != task.id).all()
+        available_tasks.extend(project_tasks)
+    
     return render_template('tasks/view.html', 
                          task=task, 
                          comments=comments,
-                         documents=documents)
+                         documents=documents,
+                         available_tasks=available_tasks)
 
 @app.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1111,13 +1143,40 @@ def api_project_tasks(project_id):
     if project not in accessible_projects:
         abort(403)
     
-    tasks = Task.query.filter_by(project_id=project_id).all()
-    tasks_data = [{'id': task.id, 'title': task.title} for task in tasks]
+    # Get all tasks from user's accessible projects for dependency selection
+    all_tasks = []
+    for accessible_project in accessible_projects:
+        project_tasks = Task.query.filter_by(project_id=accessible_project.id).all()
+        for task in project_tasks:
+            all_tasks.append({
+                'id': task.id, 
+                'title': f"{task.title} ({accessible_project.title})",
+                'project_title': accessible_project.title
+            })
     
     return {
-        'tasks': tasks_data,
+        'tasks': all_tasks,
         'project_deadline': project.deadline.strftime('%Y-%m-%d') if project.deadline else None
     }
+
+@app.route('/api/tasks/all')
+@login_required
+def api_all_tasks():
+    """Get all accessible tasks for dependency dropdowns"""
+    accessible_projects = current_user.get_accessible_projects()
+    all_tasks = []
+    
+    for project in accessible_projects:
+        project_tasks = Task.query.filter_by(project_id=project.id).all()
+        for task in project_tasks:
+            all_tasks.append({
+                'id': task.id,
+                'title': task.title,
+                'project_title': project.title,
+                'status': task.status
+            })
+    
+    return {'tasks': all_tasks}
 
 # Routes for outcomes and additional features
 

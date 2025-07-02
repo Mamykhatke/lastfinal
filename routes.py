@@ -171,6 +171,11 @@ def manager_dashboard():
     
     pending_approvals = pending_task_approvals + pending_project_approvals
     
+    # Get total outcomes for accessible tasks
+    total_outcomes = 0
+    for task in tasks:
+        total_outcomes += task.outcomes.count()
+    
     # Recent projects and upcoming deadlines
     recent_projects = sorted(projects, key=lambda x: x.created_at, reverse=True)[:3]
     upcoming_deadlines = sorted([t for t in tasks if t.deadline and t.status != 'Completed'], 
@@ -185,6 +190,7 @@ def manager_dashboard():
                          pending_tasks=pending_tasks,
                          overdue_tasks=overdue_tasks,
                          pending_approvals=pending_approvals,
+                         total_outcomes=total_outcomes,
                          recent_projects=recent_projects,
                          upcoming_deadlines=upcoming_deadlines)
 
@@ -1191,10 +1197,17 @@ def create_outcome(task_id):
     
     title = request.form['title']
     description = request.form.get('description', '')
+    deadline_str = request.form.get('deadline')
+    
+    deadline = None
+    if deadline_str:
+        from datetime import datetime
+        deadline = datetime.strptime(deadline_str, '%Y-%m-%d').date()
     
     outcome = Outcome(
         title=title,
         description=description,
+        deadline=deadline,
         task_id=task_id,
         created_by_id=current_user.id
     )
@@ -1312,25 +1325,24 @@ def add_manual_dependency(task_id):
     dependency_type = request.form.get('dependency_type')
     
     if dependency_type == 'task':
-        dependency_task_id = request.form.get('dependency_task_id')
-        if dependency_task_id:
-            dependency_task = Task.query.get(dependency_task_id)
-            if dependency_task:
-                task_dep = TaskDependency(
-                    task_id=task_id,
-                    depends_on_task_id=dependency_task_id
-                )
-                db.session.add(task_dep)
+        dependent_task_id = request.form.get('dependent_task_id')
+        if dependent_task_id:
+            dependent_task = Task.query.get(dependent_task_id)
+            if dependent_task:
+                # Update the task's dependent_on_task_id field directly
+                task.dependent_on_task_id = dependent_task_id
                 db.session.commit()
                 flash('Task dependency added successfully!', 'success')
     elif dependency_type == 'manual':
-        manual_dependency = request.form.get('manual_dependency')
-        if manual_dependency:
-            task_dep = TaskDependency(
+        dependency_name = request.form.get('dependency_name')
+        dependency_description = request.form.get('dependency_description', '')
+        if dependency_name:
+            manual_dep = ManualTaskDependency(
                 task_id=task_id,
-                manual_dependency=manual_dependency
+                dependency_name=dependency_name,
+                dependency_description=dependency_description
             )
-            db.session.add(task_dep)
+            db.session.add(manual_dep)
             db.session.commit()
             flash('Manual dependency added successfully!', 'success')
     
@@ -1357,6 +1369,33 @@ def api_team_members():
     
     team_data = [{'id': user.id, 'username': user.username, 'role': user.role} for user in users]
     return {'team_members': team_data}
+
+@app.route('/api/task_outcomes')
+@login_required
+def api_task_outcomes():
+    """API endpoint to get task outcomes for dashboard modal"""
+    accessible_tasks = current_user.get_accessible_tasks()
+    
+    tasks_with_outcomes = []
+    for task in accessible_tasks:
+        outcomes = task.outcomes.all()
+        if outcomes:
+            task_data = {
+                'id': task.id,
+                'title': task.title,
+                'project_title': task.project.title,
+                'progress': task.get_progress_percentage(),
+                'outcomes': [{
+                    'id': outcome.id,
+                    'title': outcome.title,
+                    'status': outcome.status,
+                    'deadline': outcome.deadline.strftime('%Y-%m-%d') if outcome.deadline else None,
+                    'is_overdue': outcome.is_overdue() if outcome.deadline else False
+                } for outcome in outcomes]
+            }
+            tasks_with_outcomes.append(task_data)
+    
+    return {'tasks': tasks_with_outcomes}
 
 # API endpoints for dashboard modals
 @app.route('/api/dashboard/<task_type>')

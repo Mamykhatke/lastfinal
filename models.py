@@ -178,6 +178,19 @@ class Task(db.Model):
         if self.deadline and self.status != 'Completed':
             return datetime.now().date() > self.deadline
         return False
+    
+    def calculate_outcome_progress(self):
+        """Calculate task progress based on outcomes completion"""
+        total_outcomes = self.outcomes.count()
+        if total_outcomes == 0:
+            return 0
+        
+        completed_outcomes = self.outcomes.filter_by(status='Completed').count()
+        return round((completed_outcomes / total_outcomes) * 100)
+    
+    def get_progress_percentage(self):
+        """Get task progress as percentage based on outcomes"""
+        return self.calculate_outcome_progress()
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)

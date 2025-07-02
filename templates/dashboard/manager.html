@@ -6,9 +6,9 @@
 {% block content %}
 <div class="dashboard-overview">
     <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stat-card primary">
+    <div class="row mb-4 dashboard-stats">
+        <div class="col-md-2">
+            <div class="stat-card primary clickable-stat" onclick="showDetailModal('active_projects')">
                 <div class="stat-icon">
                     <i class="fas fa-folder"></i>
                 </div>
@@ -18,8 +18,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card success">
+        <div class="col-md-2">
+            <div class="stat-card success clickable-stat" onclick="showDetailModal('completed_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
@@ -59,6 +59,17 @@
                 <div class="stat-content">
                     <h3>{{ pending_approvals }}</h3>
                     <p>Pending Approvals</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card secondary clickable-stat" onclick="showDetailModal('task_outcomes')">
+                <div class="stat-icon">
+                    <i class="fas fa-target"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_outcomes }}</h3>
+                    <p>Task Outcomes</p>
                 </div>
             </div>
         </div>
@@ -305,5 +316,148 @@ window.onclick = function(event) {
     }
 }
 </script>
+
+<style>
+/* Dashboard Statistics Equal Sizing */
+.dashboard-stats .stat-card {
+    height: 120px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.dashboard-stats .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.dashboard-stats .stat-card.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.dashboard-stats .stat-card.success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    color: white;
+}
+
+.dashboard-stats .stat-card.warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.dashboard-stats .stat-card.danger {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: white;
+}
+
+.dashboard-stats .stat-card.info {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #333;
+}
+
+.dashboard-stats .stat-card.secondary {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    color: #333;
+}
+
+.dashboard-stats .stat-icon {
+    font-size: 2.5rem;
+    margin-right: 15px;
+    opacity: 0.9;
+}
+
+.dashboard-stats .stat-content h3 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+}
+
+.dashboard-stats .stat-content p {
+    font-size: 0.9rem;
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Color-coded project and task details */
+.project-meta .status {
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.project-meta .status.just-started {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
+
+.project-meta .status.in-progress {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffcc02;
+}
+
+.project-meta .status.completed {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #81c784;
+}
+
+.deadline-item .deadline-date {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.project-item {
+    border-left: 4px solid #667eea;
+    background: #f8f9fa;
+    margin-bottom: 15px;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.deadline-item {
+    border-left: 4px solid #f093fb;
+    background: #f8f9fa;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .dashboard-stats .col-md-2 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        margin-bottom: 15px;
+    }
+    
+    .dashboard-stats .stat-card {
+        height: 100px;
+        padding: 15px;
+    }
+    
+    .dashboard-stats .stat-icon {
+        font-size: 2rem;
+    }
+    
+    .dashboard-stats .stat-content h3 {
+        font-size: 1.8rem;
+    }
+}
+</style>
 
 {% endblock %}

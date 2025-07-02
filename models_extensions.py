@@ -7,6 +7,7 @@ class Outcome(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='Pending')  # Pending, Completed
+    deadline = db.Column(db.Date)  # Deadline for the outcome
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     completed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -24,6 +25,13 @@ class Outcome(db.Model):
         self.completed_by_id = user_id
         self.completed_at = datetime.now(timezone.utc)
         db.session.commit()
+        
+    def is_overdue(self):
+        """Check if outcome is overdue"""
+        if self.deadline and self.status != 'Completed':
+            from datetime import date
+            return date.today() > self.deadline
+        return False
 
 class ProjectApproval(db.Model):
     id = db.Column(db.Integer, primary_key=True)

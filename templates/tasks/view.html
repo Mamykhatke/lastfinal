@@ -20,6 +20,17 @@
                                 <span class="badge bg-danger">Overdue</span>
                                 {% endif %}
                             </div>
+                            {% if task.outcomes|length > 0 %}
+                            <div class="task-progress-display">
+                                <label>Task Progress (Based on Outcomes):</label>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {{ task.get_progress_percentage() }}%"></div>
+                                    </div>
+                                    <span class="progress-text">{{ task.get_progress_percentage() }}%</span>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="task-actions">
                             {% if task.status != 'Completed' and (task.assigned_to_id == current_user.id or current_user.role in ['Admin', 'Manager']) %}
@@ -222,11 +233,18 @@
                             <div class="timeline-content">
                                 <div class="timeline-header">
                                     <h5>{{ outcome.title }}</h5>
-                                    {% if outcome.completed_at %}
-                                    <span class="timeline-date">
-                                        <i class="fas fa-calendar-check"></i> Completed {{ outcome.completed_at.strftime('%b %d, %Y') }}
-                                    </span>
-                                    {% endif %}
+                                    <div class="timeline-dates">
+                                        {% if outcome.deadline %}
+                                        <span class="timeline-deadline {% if outcome.is_overdue() %}overdue{% endif %}">
+                                            <i class="fas fa-calendar"></i> Due: {{ outcome.deadline.strftime('%b %d, %Y') }}
+                                        </span>
+                                        {% endif %}
+                                        {% if outcome.completed_at %}
+                                        <span class="timeline-date">
+                                            <i class="fas fa-calendar-check"></i> Completed {{ outcome.completed_at.strftime('%b %d, %Y') }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 
                                 <p class="timeline-description">{{ outcome.description or 'No description provided.' }}</p>
@@ -276,6 +294,11 @@
                             
                             <div class="outcome-meta">
                                 <span class="outcome-creator">Created by: {{ outcome.created_by.username }}</span>
+                                {% if outcome.deadline %}
+                                <span class="outcome-deadline {% if outcome.is_overdue() %}overdue{% endif %}">
+                                    <i class="fas fa-calendar"></i> Due: {{ outcome.deadline.strftime('%b %d, %Y') }}
+                                </span>
+                                {% endif %}
                                 {% if outcome.completed_at %}
                                 <span class="outcome-completed">
                                     <i class="fas fa-calendar-check"></i> Completed: {{ outcome.completed_at.strftime('%b %d, %Y') }}
@@ -511,6 +534,10 @@
                     <label>Description</label>
                     <textarea name="description" class="form-control" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" name="deadline" class="form-control">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">Add Outcome</button>
@@ -668,6 +695,67 @@
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+.timeline-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.timeline-deadline, .outcome-deadline {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.timeline-deadline.overdue, .outcome-deadline.overdue {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.timeline-date, .outcome-completed {
+    color: #28a745;
+    font-size: 0.85rem;
+}
+
+.task-progress-display {
+    margin-top: 15px;
+}
+
+.task-progress-display label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #495057;
+    min-width: 35px;
 }
 </style>
 

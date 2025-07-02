@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -1374,11 +1374,12 @@ def api_team_members():
 @login_required
 def api_task_outcomes():
     """API endpoint to get task outcomes for dashboard modal"""
+    from models_extensions import Outcome
     accessible_tasks = current_user.get_accessible_tasks()
     
     tasks_with_outcomes = []
     for task in accessible_tasks:
-        outcomes = task.outcomes.all()
+        outcomes = Outcome.query.filter_by(task_id=task.id).all()
         if outcomes:
             task_data = {
                 'id': task.id,

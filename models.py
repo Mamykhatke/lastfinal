@@ -181,11 +181,12 @@ class Task(db.Model):
     
     def calculate_outcome_progress(self):
         """Calculate task progress based on outcomes completion"""
-        total_outcomes = self.outcomes.count()
+        from models_extensions import Outcome
+        total_outcomes = Outcome.query.filter_by(task_id=self.id).count()
         if total_outcomes == 0:
             return 0
         
-        completed_outcomes = self.outcomes.filter_by(status='Completed').count()
+        completed_outcomes = Outcome.query.filter_by(task_id=self.id, status='Completed').count()
         return round((completed_outcomes / total_outcomes) * 100)
     
     def get_progress_percentage(self):

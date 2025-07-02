@@ -172,9 +172,10 @@ def manager_dashboard():
     pending_approvals = pending_task_approvals + pending_project_approvals
     
     # Get total outcomes for accessible tasks
+    from models_extensions import Outcome
     total_outcomes = 0
     for task in tasks:
-        total_outcomes += task.outcomes.count()
+        total_outcomes += Outcome.query.filter_by(task_id=task.id).count()
     
     # Recent projects and upcoming deadlines
     recent_projects = sorted(projects, key=lambda x: x.created_at, reverse=True)[:3]

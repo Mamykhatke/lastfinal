@@ -137,10 +137,30 @@
                 
                 <div class="deadlines-list">
                     {% for task in upcoming_deadlines %}
-                    <div class="deadline-item">
+                    <div class="deadline-item clickable-deadline" onclick="navigateToTask({{ task.id }})">
+                        <div class="deadline-icon">
+                            {% if task.is_overdue() %}
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                            {% else %}
+                            <i class="fas fa-clock text-warning"></i>
+                            {% endif %}
+                        </div>
+                        
                         <div class="deadline-info">
                             <h5>{{ task.title }}</h5>
-                            <p>{{ task.project.title }}</p>
+                            <p class="task-project">{{ task.project.title }}</p>
+                            
+                            <div class="assignee-info">
+                                {% if task.assigned_user %}
+                                <span class="assignee">
+                                    <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+                                </span>
+                                {% else %}
+                                <span class="assignee unassigned">
+                                    <i class="fas fa-user-slash"></i> Unassigned
+                                </span>
+                                {% endif %}
+                            </div>
                             
                             <div class="deadline-meta">
                                 <span class="deadline-date">{{ task.deadline.strftime('%b %d, %Y') }}</span>
@@ -154,6 +174,7 @@
                                         <span class="badge bg-info">{{ days_remaining }} days</span>
                                     {% endif %}
                                 {% endif %}
+                                <span class="priority priority-{{ task.priority.lower() }}">{{ task.priority }}</span>
                             </div>
                         </div>
                     </div>
@@ -457,6 +478,94 @@ window.onclick = function(event) {
     .dashboard-stats .stat-content h3 {
         font-size: 1.8rem;
     }
+}
+
+/* Deadline Item Styles */
+.deadline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    border-left: 3px solid #007bff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.deadline-item:hover, .clickable-deadline:hover {
+    background: #e9ecef;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.deadline-icon {
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.deadline-info {
+    flex: 1;
+}
+
+.deadline-info h5 {
+    margin: 0 0 4px 0;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.task-project {
+    margin: 0 0 8px 0;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.assignee-info {
+    margin: 6px 0;
+}
+
+.assignee {
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+.assignee.unassigned {
+    color: #dc3545;
+}
+
+.deadline-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.deadline-date {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.priority {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.priority-high {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.priority-medium {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.priority-low {
+    background: #e8f5e8;
+    color: #2e7d32;
 }
 </style>
 

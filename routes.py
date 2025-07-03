@@ -345,7 +345,24 @@ def edit_project(project_id):
 @login_required
 def tasks_list():
     tasks = current_user.get_accessible_tasks()
-    return render_template('tasks/list.html', tasks=tasks)
+    
+    # Get team members for reassignment dropdown
+    if current_user.role == 'Admin':
+        team_members = User.query.filter(User.id != current_user.id).all()
+    elif current_user.role == 'Manager':
+        # Manager can reassign to their managed users and other managers
+        managed_user_ids = [u.id for u in current_user.managed_users]
+        team_members = User.query.filter(
+            db.or_(
+                User.id.in_(managed_user_ids),
+                User.role == 'Manager'
+            ),
+            User.id != current_user.id
+        ).all()
+    else:
+        team_members = []
+    
+    return render_template('tasks/list.html', tasks=tasks, team_members=team_members)
 
 @app.route('/tasks/create', methods=['GET', 'POST'])
 @login_required
@@ -1005,7 +1022,7 @@ def complete_milestone_action(milestone_id):
 @login_required
 def settings_add_user():
     """Add user from settings if permission granted"""
-    if not (current_user.has_permission('Settings', 'Add') or current_user.role == 'Admin'):
+    if not (current_user.has_permission('Settings', 'Add') or current_user.role in ['Admin', 'Manager']):
         abort(403)
     
     if request.method == 'POST':
@@ -1407,12 +1424,15 @@ def api_dashboard_data(task_type):
     from flask import jsonify
     
     try:
+        # Get accessible tasks based on user role
+        accessible_tasks = current_user.get_accessible_tasks()
+        
         if task_type == 'completed_tasks':
-            tasks = Task.query.filter_by(status='Completed')
+            tasks = [task for task in accessible_tasks if task.status == 'Completed']
         elif task_type == 'active_tasks' or task_type == 'pending_tasks':
-            tasks = Task.query.filter_by(status='Pending')
+            tasks = [task for task in accessible_tasks if task.status in ['Pending', 'In Progress']]
         elif task_type == 'overdue_tasks':
-            tasks = Task.query.filter(Task.deadline < datetime.now().date(), Task.status != 'Completed')
+            tasks = [task for task in accessible_tasks if task.is_overdue() and task.status != 'Completed']
         elif task_type == 'pending_approvals':
             # Get pending approvals based on user role
             if current_user.role == 'Admin':
@@ -1465,31 +1485,21 @@ def api_dashboard_data(task_type):
             
             return jsonify({'tasks': approval_items})
         else:
-            return jsonify({'tasks': []})
-        
-        # For regular task queries, filter based on user permissions
-        if current_user.role == 'Admin':
-            tasks = tasks.all()
-        else:
-            accessible_tasks = current_user.get_accessible_tasks()
-            task_ids = [t.id for t in accessible_tasks]
-            tasks = tasks.filter(Task.id.in_(task_ids)).all()
-        
-        # Format task data for JSON response
-        task_data = []
-        for task in tasks:
-            task_data.append({
-                'id': task.id,
-                'title': task.title,
-                'project_title': task.project.title,
-                'priority': task.priority,
-                'status': task.status,
-                'assigned_user': task.assigned_user.username if task.assigned_user else None,
-                'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None,
-                'type': 'task'
-            })
-        
-        return jsonify({'tasks': task_data})
+            # Format task data for JSON response
+            task_data = []
+            for task in tasks:
+                task_data.append({
+                    'id': task.id,
+                    'title': task.title,
+                    'project_title': task.project.title,
+                    'priority': task.priority,
+                    'status': task.status,
+                    'assigned_user': task.assigned_user.username if task.assigned_user else None,
+                    'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None,
+                    'type': 'task'
+                })
+            
+            return jsonify({'tasks': task_data})
         
     except Exception as e:
         return jsonify({'error': str(e), 'tasks': []})

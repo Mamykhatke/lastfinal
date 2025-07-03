@@ -861,6 +861,25 @@ function showAddDependencyModal() {
 function hideAddDependencyModal() {
     document.getElementById('addDependencyModal').style.display = 'none';
 }
+
+// Handle dependency type toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const dependencyType = document.getElementsByName('dependency_type');
+    const taskOptions = document.getElementById('taskDependencyOptions');
+    const manualOptions = document.getElementById('manualDependencyOptions');
+    
+    dependencyType.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'task') {
+                taskOptions.style.display = 'block';
+                manualOptions.style.display = 'none';
+            } else if (this.value === 'manual') {
+                taskOptions.style.display = 'none';
+                manualOptions.style.display = 'block';
+            }
+        });
+    });
+});
 </script>
 
 <style>

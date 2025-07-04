@@ -30,23 +30,23 @@
                     
                     <div class="project-meta-grid">
                         <div class="meta-item">
-                            <label>Created by:</label>
-                            <span>{{ project.creator.username }}</span>
+                            <label>🟦 Created by:</label>
+                            <span style="color: blue; font-weight: bold;">{{ project.creator.username }}</span>
                         </div>
                         <div class="meta-item">
-                            <label>Created on:</label>
-                            <span>{{ project.created_at.strftime('%B %d, %Y') }}</span>
+                            <label>🟩 Created on:</label>
+                            <span style="color: green; font-weight: bold;">{{ project.created_at.strftime('%B %d, %Y') }}</span>
                         </div>
                         {% if project.deadline %}
                         <div class="meta-item">
-                            <label>Deadline:</label>
-                            <span>{{ project.deadline.strftime('%B %d, %Y') }}</span>
+                            <label>🟥 Deadline:</label>
+                            <span style="color: red; font-weight: bold;">{{ project.deadline.strftime('%B %d, %Y') }}</span>
                         </div>
                         {% endif %}
                         <div class="meta-item">
-                            <label>Progress:</label>
+                            <label>🟧 Progress:</label>
                             <div class="progress-container">
-                                <span>{{ project.progress }}%</span>
+                                <span style="color: orange; font-weight: bold;">{{ project.progress }}%</span>
                                 <div class="progress">
                                     <div class="progress-bar" style="width: {{ project.progress }}%"></div>
                                 </div>
@@ -76,15 +76,15 @@
                             <h5><a href="{{ url_for('view_task', task_id=task.id) }}">{{ task.title }}</a></h5>
                             <p>{{ task.description[:100] }}...</p>
                             {% if task.assigned_user %}
-                            <small class="text-muted">Assigned to: {{ task.assigned_user.username }}</small>
+                            <small>👤 Assigned to: <span style="color: darkgreen; font-weight: bold;">{{ task.assigned_user.username }}</span></small>
                             {% endif %}
                         </div>
                         
                         <div class="task-meta">
-                            <span class="priority priority-{{ task.priority.lower() }}">{{ task.priority }}</span>
-                            <span class="status status-{{ task.status.lower().replace(' ', '-') }}">{{ task.status }}</span>
+                            <span class="priority priority-{{ task.priority.lower() }}">⚡ {{ task.priority }}</span>
+                            <span class="status status-{{ task.status.lower().replace(' ', '-') }}">📊 {{ task.status }}</span>
                             {% if task.deadline %}
-                            <span class="deadline">Due: {{ task.deadline.strftime('%b %d') }}</span>
+                            <span class="deadline">🟥 Due: <span style="color: red; font-weight: bold;">{{ task.deadline.strftime('%b %d') }}</span></span>
                             {% endif %}
                         </div>
                     </div>

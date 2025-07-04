@@ -52,31 +52,31 @@
                     
                     <div class="task-meta-grid">
                         <div class="meta-item">
-                            <label>Project:</label>
-                            <span><a href="{{ url_for('view_project', project_id=task.project.id) }}">{{ task.project.title }}</a></span>
+                            <label>📋 Project:</label>
+                            <span><a href="{{ url_for('view_project', project_id=task.project.id) }}" style="color: purple; font-weight: bold;">{{ task.project.title }}</a></span>
                         </div>
                         <div class="meta-item">
-                            <label>Created by:</label>
-                            <span>{{ task.creator.username }}</span>
+                            <label>🟦 Created by:</label>
+                            <span style="color: blue; font-weight: bold;">{{ task.creator.username }}</span>
                         </div>
                         <div class="meta-item">
-                            <label>Assigned to:</label>
-                            <span>{{ task.assigned_user.username if task.assigned_user else 'Unassigned' }}</span>
+                            <label>👤 Assigned to:</label>
+                            <span style="color: darkgreen; font-weight: bold;">{{ task.assigned_user.username if task.assigned_user else 'Unassigned' }}</span>
                         </div>
                         <div class="meta-item">
-                            <label>Created on:</label>
-                            <span>{{ task.created_at.strftime('%B %d, %Y') }}</span>
+                            <label>🟩 Created on:</label>
+                            <span style="color: green; font-weight: bold;">{{ task.created_at.strftime('%B %d, %Y') }}</span>
                         </div>
                         {% if task.deadline %}
                         <div class="meta-item">
-                            <label>Deadline:</label>
-                            <span>{{ task.deadline.strftime('%B %d, %Y') }}</span>
+                            <label>🟥 Deadline:</label>
+                            <span style="color: red; font-weight: bold;">{{ task.deadline.strftime('%B %d, %Y') }}</span>
                         </div>
                         {% endif %}
                         {% if task.completed_at %}
                         <div class="meta-item">
-                            <label>Completed on:</label>
-                            <span>{{ task.completed_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                            <label>✅ Completed on:</label>
+                            <span style="color: green; font-weight: bold;">{{ task.completed_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
                         </div>
                         {% endif %}
                     </div>

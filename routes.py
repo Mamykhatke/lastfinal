@@ -1433,6 +1433,8 @@ def add_manual_dependency(task_id):
 @login_required
 def api_team_members():
     """API endpoint to get team members for dropdowns"""
+    from flask import jsonify
+    
     if current_user.role == 'Admin':
         users = User.query.filter(User.id != current_user.id).all()
     elif current_user.role == 'Manager':
@@ -1449,7 +1451,7 @@ def api_team_members():
         users = []
     
     team_data = [{'id': user.id, 'username': user.username, 'role': user.role} for user in users]
-    return {'team_members': team_data}
+    return jsonify({'team_members': team_data})
 
 @app.route('/api/task_outcomes')
 @login_required

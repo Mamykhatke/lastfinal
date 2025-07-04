@@ -558,53 +558,159 @@ function generateOutcomesList(outcomes) {
         if (!groupedOutcomes[outcome.task_id]) {
             groupedOutcomes[outcome.task_id] = {
                 task_title: outcome.task_title,
+                task_id: outcome.task_id,
                 outcomes: []
             };
         }
         groupedOutcomes[outcome.task_id].outcomes.push(outcome);
     });
     
-    let html = '<div class="accordion" id="outcomesAccordion">';
-    let index = 0;
+    let html = '<div class="list-group">';
     Object.keys(groupedOutcomes).forEach(taskId => {
         const task = groupedOutcomes[taskId];
-        html += `
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="heading${index}">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
-                        📋 Task: <span style="color: blue; font-weight: bold;">${task.task_title}</span> 
-                        <span class="badge bg-secondary ms-2">${task.outcomes.length} outcomes</span>
-                    </button>
-                </h2>
-                <div id="collapse${index}" class="accordion-collapse collapse" data-bs-parent="#outcomesAccordion">
-                    <div class="accordion-body">
-                        <div class="list-group">
-        `;
+        const completedOutcomes = task.outcomes.filter(o => o.status === 'Completed').length;
+        const totalOutcomes = task.outcomes.length;
         
-        task.outcomes.forEach(outcome => {
-            const statusColor = outcome.status === 'Completed' ? 'success' : 'warning';
-            html += `
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">
+                        <a href="/tasks/${task.task_id}" style="color: purple; font-weight: bold;">${task.task_title}</a>
+                    </h6>
+                    <small class="text-muted">🎯 ${completedOutcomes}/${totalOutcomes} outcomes completed</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-info me-2">${totalOutcomes} outcomes</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showTaskOutcomes(${task.task_id}, '${task.task_title}')">
+                        Show More
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
+
+// Function to show specific task outcomes
+function showTaskOutcomes(taskId, taskTitle) {
+    // Create a new modal for task-specific outcomes
+    let modal = document.getElementById('taskOutcomesModal');
+    if (!modal) {
+        modal = createTaskOutcomesModal();
+        document.body.appendChild(modal);
+    }
+    
+    const modalTitle = document.getElementById('taskOutcomesModalLabel');
+    const modalBody = document.getElementById('taskOutcomesModalBody');
+    
+    modalTitle.innerHTML = `📋 Task Outcomes: <span style="color: blue; font-weight: bold;">${taskTitle}</span>`;
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Fetch task-specific outcomes
+    fetch(`/api/task-outcomes/${taskId}`)
+        .then(response => response.json())
+        .then(data => {
+            modalBody.innerHTML = generateTaskSpecificOutcomes(data.outcomes, taskId);
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<div class="alert alert-danger">Error loading task outcomes</div>';
+            console.error('Error:', error);
+        });
+}
+
+function createTaskOutcomesModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'taskOutcomesModal';
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskOutcomesModalLabel">Task Outcomes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="taskOutcomesModalBody">
+                    Loading...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="addNewOutcome()">Add New Outcome</button>
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function generateTaskSpecificOutcomes(outcomes, taskId) {
+    if (outcomes.length === 0) {
+        return `
+            <div class="text-center text-muted">
+                <p>No outcomes found for this task</p>
+                <button class="btn btn-primary" onclick="addNewOutcome(${taskId})">Add First Outcome</button>
+            </div>
+        `;
+    }
+    
+    let html = '<div class="list-group">';
+    outcomes.forEach(outcome => {
+        const statusColor = outcome.status === 'Completed' ? 'success' : 'warning';
+        const statusIcon = outcome.status === 'Completed' ? '✅' : '⏳';
+        
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
                         <h6 class="mb-1">${outcome.title}</h6>
+                        <p class="mb-1 text-muted">${outcome.description || 'No description'}</p>
                         <small>🟦 Created by: <span style="color: blue; font-weight: bold;">${outcome.created_by}</span>
                         ${outcome.deadline ? `| 🟥 Due: <span style="color: red; font-weight: bold;">${outcome.deadline}</span>` : ''}</small>
                     </div>
-                    <span class="badge bg-${statusColor}">📊 ${outcome.status}</span>
-                </div>
-            `;
-        });
-        
-        html += `
-                        </div>
+                    <div class="text-end">
+                        <span class="badge bg-${statusColor}">${statusIcon} ${outcome.status}</span>
+                        ${outcome.status === 'Pending' ? `
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-success" onclick="completeOutcome(${outcome.id})">
+                                    Mark Complete
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
         `;
-        index++;
     });
     html += '</div>';
     return html;
+}
+
+function completeOutcome(outcomeId) {
+    fetch(`/outcomes/${outcomeId}/complete`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Utils.showNotification('Outcome marked as complete', 'success');
+            // Refresh the task outcomes modal
+            const currentTaskId = document.querySelector('#taskOutcomesModalLabel').textContent.match(/Task Outcomes: (.+)/)?.[1];
+            if (currentTaskId) {
+                showTaskOutcomes(currentTaskId);
+            }
+        } else {
+            Utils.showNotification(data.error || 'Failed to complete outcome', 'error');
+        }
+    })
+    .catch(error => {
+        Utils.showNotification('Error completing outcome', 'error');
+        console.error('Error:', error);
+    });
 }
 
 function generateApprovalsList(items) {

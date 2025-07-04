@@ -6,9 +6,9 @@
 {% block content %}
 <div class="dashboard-overview">
     <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stat-card primary">
+    <div class="row mb-4 dashboard-stats">
+        <div class="col-md-2">
+            <div class="stat-card primary clickable-stat" onclick="showDetailModal('active_projects')">
                 <div class="stat-icon">
                     <i class="fas fa-folder"></i>
                 </div>
@@ -18,7 +18,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card success clickable-stat" onclick="showDetailModal('completed_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-check-circle"></i>
@@ -29,7 +29,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card warning clickable-stat" onclick="showDetailModal('active_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-clock"></i>
@@ -40,7 +40,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card danger clickable-stat" onclick="showDetailModal('overdue_tasks')">
                 <div class="stat-icon">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -51,11 +51,7 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Second row for Pending Approvals -->
-    <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stat-card info clickable-stat" onclick="showDetailModal('pending_approvals')">
                 <div class="stat-icon">
                     <i class="fas fa-clipboard-check"></i>
@@ -63,6 +59,17 @@
                 <div class="stat-content">
                     <h3>{{ pending_approvals }}</h3>
                     <p>Pending Approvals</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card secondary clickable-stat" onclick="showDetailModal('task_outcomes')">
+                <div class="stat-icon">
+                    <i class="fas fa-target"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ total_outcomes }}</h3>
+                    <p>Task Outcomes</p>
                 </div>
             </div>
         </div>

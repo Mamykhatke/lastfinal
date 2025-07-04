@@ -1067,19 +1067,65 @@ def api_dashboard_tasks(task_type):
     from datetime import date
     from flask import jsonify
     
+    # Get user's accessible tasks and projects
+    accessible_tasks = current_user.get_accessible_tasks()
+    accessible_projects = current_user.get_accessible_projects()
+    
     if task_type == 'completed_tasks':
-        tasks = Task.query.filter_by(status='Completed').order_by(Task.completed_at.desc()).limit(50).all()
+        tasks = accessible_tasks.filter_by(status='Completed').order_by(Task.completed_at.desc()).limit(50).all()
     elif task_type == 'active_tasks':
-        tasks = Task.query.filter(Task.status.in_(['Active', 'In Progress'])).order_by(Task.created_at.desc()).limit(50).all()
+        tasks = accessible_tasks.filter(Task.status.in_(['Pending', 'In Progress'])).order_by(Task.created_at.desc()).limit(50).all()
     elif task_type == 'overdue_tasks':
         today = date.today()
-        tasks = Task.query.filter(Task.deadline < today, Task.status != 'Completed').order_by(Task.deadline).limit(50).all()
+        tasks = accessible_tasks.filter(Task.deadline < today, Task.status != 'Completed').order_by(Task.deadline).limit(50).all()
+    elif task_type == 'active_projects':
+        projects = accessible_projects.filter(Project.status.in_(['Just Started', 'In Progress'])).order_by(Project.created_at.desc()).limit(50).all()
+        project_data = []
+        for project in projects:
+            project_data.append({
+                'id': project.id,
+                'title': project.title,
+                'description': project.description[:100] + '...' if project.description and len(project.description) > 100 else project.description,
+                'status': project.status,
+                'progress': project.progress,
+                'created_by': project.creator.username,
+                'created_at': project.created_at.strftime('%b %d, %Y'),
+                'deadline': project.deadline.strftime('%b %d, %Y') if project.deadline else None,
+                'tasks_count': project.tasks.count(),
+                'team_count': len(project.assigned_users)
+            })
+        return jsonify({'projects': project_data})
+    elif task_type == 'task_outcomes':
+        from models_extensions import Outcome
+        # Get outcomes for accessible tasks
+        task_ids = [task.id for task in accessible_tasks.all()]
+        outcomes = Outcome.query.filter(Outcome.task_id.in_(task_ids)).order_by(Outcome.created_at.desc()).limit(50).all()
+        outcome_data = []
+        for outcome in outcomes:
+            outcome_data.append({
+                'id': outcome.id,
+                'title': outcome.title,
+                'task_title': outcome.task.title,
+                'task_id': outcome.task.id,
+                'status': outcome.status,
+                'deadline': outcome.deadline.strftime('%b %d, %Y') if outcome.deadline else None,
+                'created_by': outcome.created_by.username
+            })
+        return jsonify({'outcomes': outcome_data})
     elif task_type == 'pending_approvals':
-        # Get pending approvals for tasks, projects, and outcomes
         pending_data = []
         
-        # Task approvals
-        task_approvals = TaskApproval.query.filter_by(status='Pending').all()
+        # Get accessible task and project IDs
+        accessible_task_ids = [task.id for task in accessible_tasks.all()]
+        accessible_project_ids = [project.id for project in accessible_projects.all()]
+        
+        # Task approvals for accessible tasks
+        from models_extensions import TaskApproval, ProjectApproval
+        task_approvals = TaskApproval.query.filter(
+            TaskApproval.status == 'Pending',
+            TaskApproval.task_id.in_(accessible_task_ids)
+        ).all()
+        
         for approval in task_approvals:
             pending_data.append({
                 'id': approval.task.id,
@@ -1092,8 +1138,12 @@ def api_dashboard_tasks(task_type):
                 'status': approval.task.status
             })
         
-        # Project approvals
-        project_approvals = ProjectApproval.query.filter_by(status='Pending').all()
+        # Project approvals for accessible projects
+        project_approvals = ProjectApproval.query.filter(
+            ProjectApproval.status == 'Pending',
+            ProjectApproval.project_id.in_(accessible_project_ids)
+        ).all()
+        
         for approval in project_approvals:
             pending_data.append({
                 'id': approval.project.id,
@@ -1118,7 +1168,9 @@ def api_dashboard_tasks(task_type):
             'priority': task.priority,
             'status': task.status,
             'assigned_user': task.assigned_user.username if task.assigned_user else None,
-            'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None
+            'deadline': task.deadline.strftime('%b %d, %Y') if task.deadline else None,
+            'created_by': task.creator.username,
+            'created_at': task.created_at.strftime('%b %d, %Y')
         })
     
     return jsonify({'tasks': task_data})
